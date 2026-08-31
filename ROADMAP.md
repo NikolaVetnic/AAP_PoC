@@ -14,7 +14,7 @@ Repository, Python 3.12 venv, dependencies, test harness, agent documentation.
 
 **Exit:** `pytest` runs; `CLAUDE.md` and this roadmap exist.
 
-## Stage 1 — MIDI acquisition `[~]`
+## Stage 1 — MIDI acquisition `[x]`
 
 ```
 e-drum -> Max -> print note, velocity, timestamp
@@ -48,6 +48,8 @@ e-drum -> Max -> OSC -> Python -> console
 Semantic OSC addresses (`/hit/snare 0.82`), not note numbers (§4).
 
 **Exit:** hitting a pad prints a `Hit` in the Python console with plausible latency.
+
+> **The composer is writing this stage by hand.** Guide, review, explain and debug on request — do not write the bridge for them. Offer the design tradeoffs and let them choose. This applies to Stage 2 specifically; ask before assuming it extends further.
 
 ## Stage 3 — Return path `[ ]`
 

@@ -10,3 +10,7 @@ the engine; nothing downstream may branch on where a hit came from.
 
 Design notes 5, 36.  Populated at roadmap Stage 4-5.
 """
+
+from aap.core.hit import Hit
+
+__all__ = ["Hit"]
