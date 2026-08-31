@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv --version)",
+      "Bash(git --version)",
+      "Bash(ls /Applications | grep -i -E \"max|reaper|ableton\" ; echo \"--- done\")",
+      "Read(//Applications/**)",
+      "Bash(defaults read *)",
+      "Bash(ls /opt/homebrew/bin/ 2>/dev/null | grep -E \"^python|^pip\" ; echo \"--- pyenv:\"; ls ~/.pyenv 2>/dev/null || echo none; echo \"--- conda:\"; which conda 2>/dev/null || echo none)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//Users/nikolavetnic/**)",
+      "Bash(brew install *)",
+      "Bash(python3 unwrap.py /Users/nikolavetnic/Projects/Music/PoC/consolidated_design_notes.md ./reformatted.md)",
+      "Bash(/opt/homebrew/bin/python3.12 --version)",
+      "Bash(python3 /private/tmp/claude-501/-Users-nikolavetnic-Projects-Music-PoC/25c2708f-1cda-423e-8dee-71142f8e4057/scratchpad/unwrap.py consolidated_design_notes.md)",
+      "Bash(/opt/homebrew/bin/python3.12 -m venv .venv)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/python --version)",
+      "Bash(.venv/bin/pip list *)",
+      "Bash(.venv/bin/pytest)",
+      "Bash(.venv/bin/ruff check *)",
+      "Bash(.venv/bin/ruff format *)",
+      "Bash(sed -n '/^1\\\\.  How much of the human/,/^4\\\\.  How much rhythmic/p' consolidated_design_notes.md)",
+      "Bash(sed -n '/^if ioi_slope/,/mild_acceleration/p' consolidated_design_notes.md)",
+      "Bash(grep -v '^\\\\.$')",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(xxd fixtures/midi/scratch.mid)",
+      "Bash(.venv/bin/python -)"
+    ]
+  }
+}

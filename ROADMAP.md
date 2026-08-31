@@ -1,0 +1,129 @@
+# Roadmap
+
+The staged implementation order from design notes §54. Build the current stage; do not build ahead of it.
+
+Each stage has an **exit condition** that must be demonstrable, and most end in listening rather than in a green test suite (§38).
+
+Status: `[ ]` not started · `[~]` in progress · `[x]` done
+
+---
+
+## Stage 0 — Project setup `[x]`
+
+Repository, Python 3.12 venv, dependencies, test harness, agent documentation.
+
+**Exit:** `pytest` runs; `CLAUDE.md` and this roadmap exist.
+
+## Stage 1 — MIDI acquisition `[~]`
+
+```
+e-drum -> Max -> print note, velocity, timestamp
+```
+
+Max patch only. Establishes pad-number → instrument-name mapping for the actual hardware. No Python involved.
+
+**Exit:** every pad and zone on the kit prints a stable, correctly named event.
+
+Built as [max/midi-input.maxpat](max/midi-input.maxpat) + [max/pad-map.txt](max/pad-map.txt), and verified against `scratch.mid`: all 11 notes, names, normalised velocities and timestamps match the source exactly. Still open until the kit itself has been played through it — `pad-map.txt` currently holds General MIDI defaults, not this hardware's note numbers.
+
+## Stage 2 — Python bridge `[ ]`
+
+```
+e-drum -> Max -> OSC -> Python -> console
+```
+
+Semantic OSC addresses (`/hit/snare 0.82`), not note numbers (§4).
+
+**Exit:** hitting a pad prints a `Hit` in the Python console with plausible latency.
+
+## Stage 3 — Return path `[ ]`
+
+```
+e-drum -> Max -> Python -> generated event -> Max -> sample
+```
+
+Also implement the immediate-sound optimisation (§3.3): the physical hit sounds in Max at once; the Python response arrives as elaboration.
+
+**Exit:** one hit produces one machine-generated sound with no audible lag on the struck note.
+
+## Stage 4 — One archetype `[ ]`
+
+Implement only `Fragment` (§7.2, §18). One hit creates a deterministic generated phrase. Phrase carries **relative offsets**; Max schedules it (§3.2).
+
+**Exit:** hitting harder audibly produces a denser fragmentation (§8).
+
+## Stage 5 — Fixed MIDI simulation `[ ]`
+
+Build the tiny mapping fixture (§37) and make live and file input normalise into the same `Hit` type (§36). This is the deterministic test harness everything later depends on — do not defer it.
+
+**Exit:** the same fixture rendered twice produces byte-identical event logs.
+
+## Stage 6 — Gesture segmentation `[ ]`
+
+Explicit delimiter as authoritative, silence threshold as fallback (§14.3).
+
+**Exit:** the gesture fixture segments exactly as intended, verified against the log.
+
+## Stage 7 — Feature extraction `[ ]`
+
+`duration`, `density`, IOI slope, velocity slope, topological distance (§15, §16). Deterministic and continuous — no classification.
+
+**Exit:** features on the gesture fixture match hand-computed expectations.
+
+## Stage 8 — Rhythmic trees `[ ]`
+
+Hierarchical proportional subdivision with exact `Fraction` arithmetic (§17).
+
+**Exit:** a tree fits a human-defined span, and the same tree audibly keeps its identity at two different spans.
+
+## Stage 9 — Formal state `[ ]`
+
+Sections and one or two formal curves, loaded from `scores/*.json` (§19–22, §31–33).
+
+**Exit:** the same hit produces recognisably different responses at minute 1 and minute 8 (§9.2).
+
+## Stage 10 — Additional archetypes `[ ]`
+
+Propagate, Converge, Resonate, Shadow, Interrupt (§18).
+
+**Exit:** blind listening — each archetype is identifiable as itself when it returns.
+
+## Stage 11 — Memory `[ ]`
+
+Literal short-term recall first, then partial and transformed recall (§28–30).
+
+**Exit:** remembered material sounds *related* to its source, not identical to it (§56.7).
+
+## Stage 12 — Conflicting layers `[ ]`
+
+Separate rhythm, density, dynamics, topology, timbre and memory into independent processes that make competing demands, negotiated by layer weights (§25–27, §34).
+
+**Exit:** non-alignment is audible, not merely numerical (§38 system evaluation).
+
+## Stage 13 — Constraints `[ ]`
+
+Hard limits and soft preferences; candidate generation and scoring (§24).
+
+**Exit:** the machine never obscures the next structural human cue.
+
+## Stage 14 — Visual layer `[ ]`
+
+Jitter, added only once the musical system is understandable (§47–51). Visuals operate at gesture/archetype/formal resolution, never one flash per hit (§48).
+
+**Exit:** the human/machine formal trajectory is visible without explanation (§57.17).
+
+---
+
+## Standing test fixtures (§37)
+
+| Fixture | Contents | Tests |
+| --- | --- | --- |
+| `fixtures/midi/tiny.mid` | 4–5 events: snare p, snare ff, tom mf, cymbal f | pad + velocity mapping, phrase selection, OSC, scheduling |
+| `fixtures/midi/gesture.mid` | 10–20 s: accel, decel, cresc, dim, pad trajectory, pause, delimiter | segmentation, feature extraction, memory, gesture response |
+| `fixtures/midi/benchmark.mid` | 2 min: sparse/dense, soft/loud, regular/irregular, long silence, several gesture boundaries | permanent regression test for the whole engine |
+
+Keep `benchmark.mid` unchanged forever. Its value is that it does not move.
+
+## The first piece (§53)
+
+A 7–11 minute solo electronic-percussion study. Human resources: kick, snare, 2–3 toms, hi-hat, ride/crash, gesture delimiter. Form: Dependence → Elaboration → Memory → Conflict → Residue.

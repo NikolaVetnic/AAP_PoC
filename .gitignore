@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Renders and logs are reproducible from a fixture + a score + a seed (design notes 42)
+renders/
+*.wav
+*.aiff
+
+# Max
+*.maxpat.bak
+Max Sample Cache/
+
+# REAPER
+*.RPP-bak
+*.reapeaks
+reaper/**/*.wav
+reaper/**/*.aiff
+
+# macOS
+.DS_Store
