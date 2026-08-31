@@ -24,7 +24,20 @@ Max patch only. Establishes pad-number → instrument-name mapping for the actua
 
 **Exit:** every pad and zone on the kit prints a stable, correctly named event.
 
-Built as [max/midi-input.maxpat](max/midi-input.maxpat) + [max/pad-map.txt](max/pad-map.txt), and verified against `scratch.mid`: all 11 notes, names, normalised velocities and timestamps match the source exactly. Still open until the kit itself has been played through it — `pad-map.txt` currently holds General MIDI defaults, not this hardware's note numbers.
+Built as [max/midi-input.maxpat](max/midi-input.maxpat) + [max/pad-map.txt](max/pad-map.txt), and verified against `scratch.mid`: all 11 notes, names, normalised velocities and timestamps match the source exactly, including two coincident notes at one timestamp.
+
+### Remaining once the kit is connected
+
+The patch is done as a mechanism; what is left is hardware-specific and cannot be guessed. Work through this list with the kit in front of you, then record what the hardware actually does in [docs/decisions.md](docs/decisions.md).
+
+1. **Discover the real note numbers.** `pad-map.txt` currently holds General MIDI defaults, which are a guess. Strike every pad and every zone; anything printing on `RAW` with no matching `HIT` is unmapped. Rewrite the file from what the kit actually sends.
+2. **Zones are the bulk of the work.** §2.1 wants 20–30 articulation states, not five drums — snare centre/rim/rimshot/cross-stick, hi-hat closed/half/open/pedal/bell, ride bow/bell/edge. Find out which of these the hardware distinguishes at all; that sets a hard ceiling on the vocabulary available to the composition.
+3. **Continuous controllers are not handled yet.** The patch has no `ctlin` — it sees notes only. Hi-hat pedal position and any positional sensing arrive as CC (§52) and are currently invisible. Decide whether Stage 1 grows to cover them or they wait until they are actually used.
+4. **Cymbal choke is likewise invisible.** `stripnote` discards note-offs by design, and choke usually arrives as a note-off, aftertouch or CC. If choke is wanted as a gesture delimiter or an INTERRUPT trigger (§18), this path has to exist.
+5. **Check the velocity range in practice.** §8 treats velocity as energy across 0–1, which assumes the full range is reachable. Play as softly and as hard as you can and see whether soft hits reach low values and hard hits saturate at 127. The module's velocity curve may need changing, or a compensating curve may be needed at the edge.
+6. **Check for double-triggering and crosstalk.** One physical strike must produce exactly one event, and hitting one pad must not trigger its neighbour. Both are pad/module tuning problems, and both would silently corrupt every gesture feature computed downstream (§15).
+7. **Choose the gesture delimiter and reserve its note number** (§14.1, §53). Decide then whether it is silent or audible — §57.7 leaves this open deliberately, so it is a question for playing, not for deciding here.
+8. **Measure end-to-end latency** on the real path, as the baseline the Stage 3 immediate-sound optimisation (§3.3) has to beat.
 
 ## Stage 2 — Python bridge `[ ]`
 
