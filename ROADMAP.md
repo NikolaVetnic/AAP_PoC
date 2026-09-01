@@ -39,7 +39,7 @@ The patch is done as a mechanism; what is left is hardware-specific and cannot b
 7. **Choose the gesture delimiter and reserve its note number** (§14.1, §53). Decide then whether it is silent or audible — §57.7 leaves this open deliberately, so it is a question for playing, not for deciding here.
 8. **Measure end-to-end latency** on the real path, as the baseline the Stage 3 immediate-sound optimisation (§3.3) has to beat.
 
-## Stage 2 — Python bridge `[ ]`
+## Stage 2 — Python bridge `[x]`
 
 ```
 e-drum -> Max -> OSC -> Python -> console
@@ -49,7 +49,17 @@ Semantic OSC addresses (`/hit/snare 0.82`), not note numbers (§4).
 
 **Exit:** hitting a pad prints a `Hit` in the Python console with plausible latency.
 
-> **The composer is writing this stage by hand.** Guide, review, explain and debug on request — do not write the bridge for them. Offer the design tradeoffs and let them choose. This applies to Stage 2 specifically; ask before assuming it extends further.
+Built as [src/aap/io/osc_input.py](src/aap/io/osc_input.py) — `hit_from_osc` converts one OSC message to one `Hit` and touches no socket, so it is testable; `build_dispatcher` and `main` hold everything that needs a network — and [max/python-bridge.maxpat](max/python-bridge.maxpat), an abstraction fed from the same three values as the `sprintf` in the acquisition patch.
+
+Verified against `scratch.mid`: 23 messages sent, 23 received, no drops, every pad name resolved and every velocity correctly normalised. Arrival time is measured as deviation from the first offset seen, because the Max and Python clocks have unrelated origins and only the spread is a measurement. That spread was roughly 3.7 ms and, decisively, did not widen during rolls at 42 ms and 62 ms spacing — nothing is queueing.
+
+The composer wrote the Python half by hand; the Max half was delegated.
+
+### Remaining once the kit is connected
+
+The bridge is complete as a mechanism, but a fixture played through `seq` exercises the software path only. Striking pads adds the piezo, the trigger module and USB MIDI, which is where jitter would actually come from.
+
+1. **Repeat the measurement on the real path** and record the figure in [docs/decisions.md](docs/decisions.md), noting the audio buffer size, whether Overdrive was on, and roughly how many hits it was judged over. This is the same measurement Stage 1 item 8 asks for, and it is the baseline the Stage 3 immediate-sound optimisation (§3.3) has to beat.
 
 ## Stage 3 — Return path `[ ]`
 
