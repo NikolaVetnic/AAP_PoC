@@ -1,9 +1,9 @@
-<REAPER_PROJECT 0.1 "6.70/OSX64" 1788198032
+<REAPER_PROJECT 0.1 "6.70/OSX64" 1788290338
   <NOTES 0 2
   >
   RIPPLE 0
   GROUPOVERRIDE 0 0 0
-  AUTOXFADE 1
+  AUTOXFADE 129
   ENVATTACH 3
   POOLEDENVATTACH 0
   MIXERUIFLAGS 11 48
@@ -16,7 +16,7 @@
   TIMEMODE 1 5 -1 30 0 0 -1
   VIDEO_CONFIG 0 0 256
   PANMODE 3
-  CURSOR 3.1875
+  CURSOR 5.5625
   ZOOM 100 0 0
   VZOOMEX 6 0
   USE_REC_CFG 0
@@ -60,8 +60,8 @@
   GLOBAL_AUTO -1
   TEMPO 120 4 4
   PLAYRATE 1 0 0.25 4
-  SELECTION 4.8125 4.875
-  SELECTION2 4.8125 4.875
+  SELECTION 0 8
+  SELECTION2 0 8
   MASTERAUTOMODE 0
   MASTERTRACKHEIGHT 0 0
   MASTERPEAKCOL 16576
@@ -103,7 +103,7 @@
     ISBUS 0 0
     BUSCOMP 0 0 0 0 0
     SHOWINMIX 1 0.6667 0.5 1 0.5 -1 -1 -1
-    SEL 1
+    SEL 0
     REC 0 0 1 0 0 0 0 0
     VU 2
     TRACKHEIGHT 0 0 0 0 0 0
@@ -176,26 +176,52 @@
         E 240 89 24 00
         E 720 99 26 5f
         E 240 89 26 00
-        e 720 99 2f 69
-        e 240 89 2f 00
-        e 720 99 2d 69
-        e 240 89 2d 00
-        e 720 99 24 69
-        e 240 89 24 00
-        e 720 99 26 69
-        e 240 89 26 00
-        e 720 99 24 69
-        e 0 99 31 69
-        e 240 89 24 00
-        e 0 89 31 00
-        E 1680 b0 7b 00
+        E 720 99 2f 69
+        E 120 89 2f 00
+        E 0 99 2f 61
+        E 120 89 2f 00
+        E 0 99 2f 6f
+        E 120 89 2f 00
+        E 0 99 2f 57
+        E 120 89 2f 00
+        E 0 99 2f 66
+        E 120 89 2f 00
+        E 0 99 2f 62
+        E 120 89 2f 00
+        E 0 99 2f 6a
+        E 120 89 2f 00
+        E 0 99 2f 55
+        E 120 89 2f 00
+        E 0 99 2d 69
+        E 80 89 2d 00
+        E 0 99 2d 50
+        E 80 89 2d 00
+        E 0 99 2d 5c
+        E 80 89 2d 00
+        E 0 99 2d 46
+        E 80 89 2d 00
+        E 0 99 2d 5b
+        E 80 89 2d 00
+        e 0 99 2d 68
+        e 80 89 2d 00
+        E 0 99 2d 7f
+        E 120 89 2d 00
+        E 360 99 24 69
+        E 120 89 24 00
+        E 840 99 26 69
+        E 120 89 26 00
+        E 840 99 24 69
+        E 0 99 31 69
+        E 120 89 24 00
+        E 0 89 31 00
+        E 1800 b0 7b 00
         CCINTERP 32
         CHASE_CC_TAKEOFFS 1
         GUID {98C53111-F17A-9649-B209-279663074420}
         IGNTEMPO 0 120 4 4
         SRCCOLOR 1
         VELLANE -1 216 0
-        CFGEDITVIEW 0 0.050651 69 12 0 -1 0 0 0 0.5
+        CFGEDITVIEW 9318.440339 0.286293 54 9 0 -1 0 0 0 0.5
         KEYSNAP 0
         TRACKSEL 0
         EVTFILTER 512 -1 -1 -1 -1 9 0 0 0 -1 -1 -1 -1 0 -1 0 -1 -1
