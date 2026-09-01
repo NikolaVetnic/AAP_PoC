@@ -81,7 +81,7 @@ def build_dispatcher() -> Dispatcher:
         if baseline is None:
             baseline = offset
 
-        print(f"hit {hit.pad:7s} vel {hit.velocity:4.2f} {(offset - baseline) * 1000:+5.1f} ms")
+        print(f"hit {hit.pad:14s} vel {hit.velocity:4.2f} {(offset - baseline) * 1000:+5.1f} ms")
 
     def on_unmapped(address: str, *args) -> None:
         """Report an address nothing is mapped to, rather than dropping it.
