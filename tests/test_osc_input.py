@@ -8,25 +8,48 @@ The bridge itself is verified by ear and eye — hit a pad, watch the console
 (§38, §56.10). That is the roadmap's exit condition and no test replaces it.
 """
 
-# TASK — write these, then make them pass.
-#
-# 1. A well-formed message becomes the expected Hit:
-#       hit_from_osc("/hit/snare", 0.82, 12734.0)
-#           -> Hit(timestamp=12.734, pad="snare", velocity=0.82)
-#    Use pytest.approx on the timestamp — 12734.0 / 1000.0 is not exactly
-#    12.734 in binary floating point, and asserting equality on it will fail
-#    for a reason that has nothing to do with your code.
-#
-# 2. A multi-word pad name survives intact: "/hit/snare_rim" -> "snare_rim".
-#    This is the case a fixed slice into the address gets wrong.
-#
-# 3. Zero is a real timestamp, not a missing one: elapsed_ms=0.0 is the first
-#    hit after a clock reset and must produce timestamp=0.0.
-#
-# 4. Velocity passes through untouched — no rescaling, no rounding. Max
-#    normalised it already; doing it twice is a class of bug that produces
-#    quiet-sounding performances and no error message.
-#
-# 5. A malformed address ("/hit", "/hit/", "/nonsense/snare") does whatever
-#    you decided in osc_input.py TASK 2. Whichever you chose, pin it here —
-#    the test is where the decision becomes a fact rather than an intention.
+import pytest
+
+from aap.io.osc_input import hit_from_osc
+
+
+def test_hit_from_osc():
+    h = hit_from_osc(address="/hit/snare", velocity=0.82, elapsed_ms=12734.0)
+    assert h.pad == "snare"
+    assert h.velocity == 0.82
+    assert h.timestamp == pytest.approx(12.734)
+
+
+def test_hit_from_osc_multiword_pad():
+    h = hit_from_osc(address="/hit/snare_rim", velocity=0.5, elapsed_ms=1000.0)
+    assert h.pad == "snare_rim"
+    assert h.velocity == 0.5
+    assert h.timestamp == pytest.approx(1.0)
+
+
+def test_hit_from_osc_zero_timestamp():
+    h = hit_from_osc(address="/hit/kick", velocity=0.7, elapsed_ms=0.0)
+    assert h.pad == "kick"
+    assert h.velocity == 0.7
+    assert h.timestamp == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize("velocity", [0.0, 0.5, 1.0])
+def test_hit_from_osc_velocity_passthrough(velocity):
+    h = hit_from_osc(address="/hit/tom", velocity=velocity, elapsed_ms=500.0)
+    assert h.pad == "tom"
+    assert h.velocity == velocity
+    assert h.timestamp == pytest.approx(0.5)
+
+
+@pytest.mark.parametrize(
+    ("address", "message"),
+    [
+        ("/hit", "unexpected OSC address"),  # missing pad name
+        ("/hit/", "missing pad name in OSC address"),  # missing pad name
+        ("/nonsense/snare", "unexpected OSC address"),  # wrong prefix
+    ],
+)
+def test_hit_from_osc_malformed_address(address, message):
+    with pytest.raises(ValueError, match=message):
+        hit_from_osc(address=address, velocity=0.5, elapsed_ms=1000.0)

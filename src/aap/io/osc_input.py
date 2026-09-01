@@ -17,89 +17,108 @@ ever learns they existed (§4, CLAUDE.md).
 Design notes §4, §36. Roadmap Stage 2.
 """
 
+import sys
+import time
+
+from pythonosc.dispatcher import Dispatcher
+from pythonosc.osc_server import BlockingOSCUDPServer
+
+from aap.core.hit import Hit
+
 # --- Transport ------------------------------------------------------------
-#
-# TASK 1 — constants.
-#
-#   HOST = "127.0.0.1", and a port for Max → Python. 7400 is a conventional
-#   choice; anything above 1024 works. Stage 3 adds a second port for the
-#   return path — keep them distinct and obvious (7400 in, 7500 out) so a
-#   misrouted message is diagnosable rather than mysterious.
-#
-#   Put them here as module constants for now. When Stage 3 needs the pair,
-#   that is the moment to decide whether they belong in a config file.
+
+HOST = "127.0.0.1"
+PORT_IN = 7400
+PORT_OUT = 7500
 
 
 # --- The pure part --------------------------------------------------------
-#
-# TASK 2 — a function that turns one OSC message into one Hit, and touches no
-# socket:
-#
-#       def hit_from_osc(address: str, velocity: float, elapsed_ms: float) -> Hit
-#
-#   Everything interesting happens here — splitting the pad name off the
-#   address, converting milliseconds to seconds, range-checking — and none of
-#   it needs a network. Keeping it separate from the server is what makes
-#   Stage 2 testable at all (see tests/test_osc_input.py).
-#
-#   Points to get right:
-#
-#   - Deriving the pad: the address is "/hit/snare". Prefer
-#     `address.rsplit("/", 1)[-1]` or a strict check that it starts with
-#     "/hit/", rather than a fixed slice — you will add other namespaces later
-#     (a delimiter, §14.1; controllers, §52) and a fixed slice will silently
-#     mis-parse them.
-#   - An address of "/hit/" or "/hit" is malformed. Decide what happens.
-#   - elapsed_ms / 1000.0 — the only unit conversion in the file, and it lives
-#     at the boundary by design.
+
+
+def hit_from_osc(address: str, velocity: float, elapsed_ms: float) -> Hit:
+    """Convert one OSC message into one Hit.
+
+    The address is "/hit/snare", the velocity is already normalised 0.–1., and
+    elapsed_ms is the time since the Max clock was reset. Return a Hit with
+    the pad name, velocity, and timestamp in seconds.
+    """
+    if not address.startswith("/hit/"):
+        raise ValueError(f"unexpected OSC address: {address!r}")
+    pad = address.rsplit("/", 1)[-1]
+    if not pad:
+        raise ValueError(f"missing pad name in OSC address: {address!r}")
+    timestamp = elapsed_ms / 1000.0
+
+    return Hit(pad=pad, velocity=velocity, timestamp=timestamp)
 
 
 # --- The plumbing ---------------------------------------------------------
-#
-# TASK 3 — the dispatcher.
-#
-#   python-osc routes by address pattern:
-#
-#       from pythonosc.dispatcher import Dispatcher
-#       disp = Dispatcher()
-#       disp.map("/hit/*", on_hit)
-#       disp.set_default_handler(on_unmapped)
-#
-#   The handler signature is `handler(address, *args)` — the address arrives
-#   as the first argument, which is exactly why the pad can live in it.
-#
-#   `set_default_handler` is worth wiring even though nothing needs it yet.
-#   It reproduces the discovery asymmetry Stage 1 already has: in the patch, an
-#   unmapped note prints on RAW but not on HIT. Here, an address you did not
-#   expect prints as unmapped instead of vanishing into a silent UDP void.
-#   Debugging a bridge that drops messages without saying so is miserable.
 
-# TASK 4 — the server, and a note on threads.
-#
-#       from pythonosc.osc_server import BlockingOSCUDPServer
-#       server = BlockingOSCUDPServer((HOST, PORT_IN), disp)
-#       server.serve_forever()
-#
-#   Blocking is right for Stage 2: the process does nothing but listen, and a
-#   single thread means no ordering questions to reason about. Stage 3 sends
-#   replies from inside the handler, which a blocking server still does fine —
-#   sending is not blocking. Reach for ThreadingOSCUDPServer only when
-#   something genuinely has to run *while* a handler is still working, and not
-#   before; concurrency you did not need is bugs you did not need.
-#
-#   Handle KeyboardInterrupt so Ctrl-C exits cleanly rather than dumping a
-#   traceback over your console output.
 
-# TASK 5 — main(), and running it.
-#
-#   Give the module a `main()` and the usual `if __name__ == "__main__":`
-#   guard, so it runs as:
-#
-#       python -m aap.io.osc_input
-#
-#   Print the host and port on startup. Half of all OSC debugging is finding
-#   out that the two ends disagreed about the port, and a process that starts
-#   silently tells you nothing about which one is wrong.
+def build_dispatcher() -> Dispatcher:
+    """Wire the OSC address space to its handlers.
+
+    Built by a function rather than at import time: the handlers close over the
+    latency baseline, and importing this module has to stay free of side effects
+    so the pure half stays testable without a socket.
+    """
+    baseline: float | None = None
+
+    def on_hit(address: str, velocity: float, elapsed_ms: float) -> None:
+        """Build the Hit, report it, and measure what the transport cost.
+
+        Nothing consumes the Hit yet; Stage 2 ends at the print. The figure
+        printed is this offset against the first one seen, because the Max and
+        Python clocks have unrelated origins — only the spread is a
+        measurement, and the first line is the reference, not a perfect reading
+        (roadmap Stage 2 exit).
+        """
+        nonlocal baseline
+        arrival = time.perf_counter()
+        hit = hit_from_osc(address, velocity, elapsed_ms)
+        offset = arrival - hit.timestamp
+
+        if baseline is None:
+            baseline = offset
+
+        print(f"hit {hit.pad:7s} vel {hit.velocity:4.2f} {(offset - baseline) * 1000:+5.1f} ms")
+
+    def on_unmapped(address: str, *args) -> None:
+        """Report an address nothing is mapped to, rather than dropping it.
+
+        The counterpart to the patch printing an unmapped note on RAW but not on
+        HIT: a message you did not expect should be visible, not swallowed by a
+        silent UDP void (§4).
+        """
+        print(f"unmapped OSC message: {address} {args}", file=sys.stderr)
+
+    disp = Dispatcher()
+
+    disp.map("/hit/*", on_hit)
+    disp.set_default_handler(on_unmapped)
+
+    return disp
+
+
+def main() -> None:
+    """Run the OSC input server.
+
+    The dispatcher is built here so it can close over the latency baseline.
+    """
+    server = BlockingOSCUDPServer((HOST, PORT_IN), build_dispatcher())
+    print(f"listening for OSC on {server.server_address} (Ctrl-C to exit)")
+
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nexiting on Ctrl-C")
+    finally:
+        server.server_close()
+
+
+if __name__ == "__main__":
+    main()
+
 
 # --- Measuring the exit condition ----------------------------------------
 #
